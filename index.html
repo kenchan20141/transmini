@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Transmini</title>
 
-    <!-- 添加到主畫面設定 -->
+    <!-- PWA 設定 -->
     <meta name="application-name" content="transmini">
     <meta name="apple-mobile-web-app-title" content="transmini">
     <link rel="manifest" href="manifest.json">
@@ -51,10 +51,10 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            /* 修正手機版滾動問題 */
             -webkit-overflow-scrolling: touch; 
         }
 
+        /* 載入畫面優化 */
         #loading-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -66,10 +66,35 @@
             z-index: 1000;
             transition: opacity 0.5s ease;
         }
-        .loader-content { width: 260px; text-align: center; }
-        .progress-bar { height: 2px; background: #CCC; margin: 15px 0; width: 100%; }
-        #progress-fill { height: 100%; background: #555; width: 0%; transition: width 0.3s; }
+        .loader-content { width: 280px; text-align: center; }
         
+        .gpu-badge {
+            background: #333; color: #00ff9d; 
+            font-size: 10px; padding: 2px 6px; 
+            border-radius: 4px; margin-left: 8px;
+            letter-spacing: 0; font-weight: bold;
+            display: none; /* 初始隱藏，檢測到才顯示 */
+        }
+        .gpu-active .gpu-badge { display: inline-block; }
+
+        .progress-bar { 
+            height: 3px; 
+            background: #DDD; 
+            margin: 15px 0; 
+            width: 100%; 
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        #progress-fill { 
+            height: 100%; 
+            background: #444; 
+            width: 0%; 
+            transition: width 0.2s ease-out; 
+        }
+        
+        #status-main { font-size: 14px; font-weight: bold; color: #555; margin-bottom: 5px; }
+        #status-sub { font-size: 11px; color: #888; letter-spacing: 1px; min-height: 15px; }
+
         .container {
             width: 100%;
             max-width: 1100px;
@@ -96,10 +121,7 @@
             gap: 30px;
         }
 
-        .lang-block {
-            display: flex;
-            flex-direction: column;
-        }
+        .lang-block { display: flex; flex-direction: column; }
 
         .block-header {
             display: flex;
@@ -120,15 +142,10 @@
         .region-b .region-tag { color: var(--bg-card); background-color: var(--accent-b); }
 
         select {
-            border: none;
-            background: transparent;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            outline: none;
-            color: #555;
-            text-align: right;
-            -webkit-appearance: none; /* iOS 樣式修正 */
+            border: none; background: transparent;
+            font-size: 14px; font-weight: 500;
+            cursor: pointer; outline: none;
+            color: #555; text-align: right;
         }
 
         .input-wrapper {
@@ -146,23 +163,11 @@
         .region-a .input-wrapper { background-color: var(--bg-a); border-top-color: var(--accent-a); }
         .region-b .input-wrapper { background-color: var(--bg-b); border-top-color: var(--accent-b); }
 
-        .input-wrapper:focus-within {
-            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
-        }
-
         textarea {
-            flex: 1;
-            width: 100%;
-            border: none;
-            background: transparent;
-            padding: 20px;
-            padding-bottom: 60px;
-            box-sizing: border-box;
-            font-size: 22px;
-            line-height: 1.6;
-            resize: none;
-            outline: none;
-            -webkit-appearance: none;
+            flex: 1; width: 100%; border: none; background: transparent;
+            padding: 20px; padding-bottom: 60px;
+            box-sizing: border-box; font-size: 22px; line-height: 1.6;
+            resize: none; outline: none; -webkit-appearance: none;
         }
         
         .region-a textarea { color: var(--text-a); }
@@ -170,34 +175,23 @@
         textarea::placeholder { opacity: 0.4; }
 
         .toolbar {
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            display: flex;
-            gap: 12px;
-            z-index: 10;
+            position: absolute; bottom: 15px; right: 15px;
+            display: flex; gap: 12px; z-index: 10;
         }
 
         .tool-btn {
             background: rgba(255,255,255,0.5);
-            border: none;
-            cursor: pointer;
-            width: 44px; /* 加大觸控區域 */
-            height: 44px;
+            border: none; cursor: pointer;
+            width: 44px; height: 44px;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 16px;
-            transition: all 0.2s;
-            color: #777;
-            /* 防止手機雙擊縮放 */
+            font-size: 16px; color: #777; transition: all 0.2s;
             touch-action: manipulation; 
         }
         .tool-btn:active { transform: scale(0.95); background: #FFF; }
-        .tool-btn:hover { background: #FFF; color: #333; }
         
         .tool-btn.recording { 
-            color: #D32F2F; 
-            background: #FFEBEE;
+            color: #D32F2F; background: #FFEBEE;
             animation: pulse 1.5s infinite;
         }
         @keyframes pulse {
@@ -207,69 +201,43 @@
         }
 
         .translate-btn {
-            margin-top: 20px;
-            width: 100%;
-            border: none;
-            padding: 16px; /* 加高按鈕 */
-            cursor: pointer;
-            font-size: 14px;
-            letter-spacing: 2px;
-            transition: opacity 0.3s;
-            color: #FFF;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            border-radius: 2px;
-            -webkit-tap-highlight-color: transparent;
+            margin-top: 20px; width: 100%; border: none; padding: 16px;
+            cursor: pointer; font-size: 14px; letter-spacing: 2px;
+            transition: opacity 0.3s; color: #FFF;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            border-radius: 2px; -webkit-tap-highlight-color: transparent;
         }
 
         .region-a .translate-btn { background-color: var(--accent-a); }
         .region-b .translate-btn { background-color: var(--accent-b); }
-        
         .translate-btn:hover { opacity: 0.85; }
         .translate-btn:disabled { opacity: 0.5; cursor: wait; }
 
         .loading-bar {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 4px;
-            background: transparent;
-            overflow: hidden;
-            display: none;
-            z-index: 5;
+            position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: transparent; overflow: hidden; display: none; z-index: 5;
         }
         .loading-bar.active { display: block; }
         .loading-bar::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; height: 100%; width: 40%;
-            background: rgba(255,255,255,0.8);
-            animation: shimme 1s infinite linear;
+            content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 40%;
+            background: rgba(255,255,255,0.8); animation: shimme 0.8s infinite linear;
         }
         @keyframes shimme { from { left: -40%; } to { left: 140%; } }
 
         .mask {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.4);
-            z-index: 4;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            font-size: 13px;
-            letter-spacing: 1px;
-            color: #555;
-            backdrop-filter: blur(1px);
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.4); z-index: 4;
+            display: none; justify-content: center; align-items: center;
+            font-size: 13px; letter-spacing: 1px; color: #555; backdrop-filter: blur(1px);
         }
         .mask.show { display: flex; }
 
-        /* 手機版適配調整 */
         @media (max-width: 768px) {
             .translation-grid { grid-template-columns: 1fr; gap: 40px; }
             .container { padding: 20px; box-shadow: none; background: transparent; }
             .input-wrapper { height: 200px; }
-            body { padding: 0; background-color: var(--bg-body); }
-            h1 { display: none; } /* 手機版隱藏標題節省空間 */
+            body { padding: 0; }
+            h1 { display: none; }
         }
         .hidden { display: none !important; }
     </style>
@@ -278,9 +246,9 @@
 
 <div id="loading-overlay">
     <div class="loader-content">
-        <div style="font-size: 12px; color: #888; letter-spacing: 2px; margin-bottom: 10px;">SYSTEM INITIALIZING</div>
+        <div id="status-main">系統啟動中 <span class="gpu-badge">GPU</span></div>
         <div class="progress-bar"><div id="progress-fill"></div></div>
-        <div id="status-msg" style="font-size: 11px; color: #AAA;">正在加載引擎 (首次需下載 400MB)</div>
+        <div id="status-sub">檢查資源完整性...</div>
     </div>
 </div>
 
@@ -288,7 +256,7 @@
     <h1>Transmini</h1>
     
     <div class="translation-grid">
-        <!-- 區域 A (暖色系) -->
+        <!-- 區域 A -->
         <div class="lang-block region-a">
             <div class="block-header">
                 <span class="region-tag">區域 A</span>
@@ -302,13 +270,9 @@
             <div class="input-wrapper" id="wrapper-a">
                 <div class="loading-bar" id="line-a"></div>
                 <textarea id="text-a" placeholder="請輸入文字..."></textarea>
-                
-                <div id="mask-a" class="mask">
-                    <span><i class="fas fa-circle-notch fa-spin"></i> 處理中...</span>
-                </div>
-
+                <div id="mask-a" class="mask"><span><i class="fas fa-circle-notch fa-spin"></i> 處理中...</span></div>
                 <div class="toolbar">
-                    <button class="tool-btn" id="mic-a" title="語音輸入 (需 HTTPS)"><i class="fas fa-microphone"></i></button>
+                    <button class="tool-btn" id="mic-a" title="語音輸入"><i class="fas fa-microphone"></i></button>
                     <button class="tool-btn" id="speaker-a" title="朗讀"><i class="fas fa-volume-up"></i></button>
                 </div>
             </div>
@@ -318,7 +282,7 @@
             </button>
         </div>
 
-        <!-- 區域 B (冷色系) -->
+        <!-- 區域 B -->
         <div class="lang-block region-b">
             <div class="block-header">
                 <span class="region-tag">區域 B</span>
@@ -332,11 +296,7 @@
             <div class="input-wrapper" id="wrapper-b">
                  <div class="loading-bar" id="line-b"></div>
                 <textarea id="text-b" placeholder="..."></textarea>
-                
-                <div id="mask-b" class="mask">
-                     <span><i class="fas fa-circle-notch fa-spin"></i> 處理中...</span>
-                </div>
-
+                <div id="mask-b" class="mask"><span><i class="fas fa-circle-notch fa-spin"></i> 處理中...</span></div>
                 <div class="toolbar">
                     <button class="tool-btn" id="mic-b" title="語音輸入"><i class="fas fa-microphone"></i></button>
                     <button class="tool-btn" id="speaker-b" title="朗讀"><i class="fas fa-volume-up"></i></button>
@@ -353,80 +313,111 @@
 <script type="module">
     import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
     
-    // 允許加載本地模型，並嘗試使用緩存
-    env.allowLocalModels = false; // 強制從 Hub 下載 (避免本地路徑錯誤)
+    // 強制設定
+    env.allowLocalModels = false;
     env.useBrowserCache = true;
+    
+    if (navigator.hardwareConcurrency) {
+        env.backends.onnx.wasm.numThreads = navigator.hardwareConcurrency;
+    }
 
     let translator = null;
     const overlay = document.getElementById('loading-overlay');
     const progressFill = document.getElementById('progress-fill');
-    const statusMsg = document.getElementById('status-msg');
+    const statusMain = document.getElementById('status-main');
+    const statusSub = document.getElementById('status-sub');
 
-    // 初始化模型
+    // 檢查 GPU 支援
+    async function checkGPU() {
+        if (!navigator.gpu) {
+            statusSub.innerText = "注意：瀏覽器不支援 WebGPU，使用 CPU 模式";
+            statusSub.style.color = "#D32F2F";
+            return false;
+        }
+        const adapter = await navigator.gpu.requestAdapter();
+        if (!adapter) {
+            statusSub.innerText = "GPU 初始化失敗，回退至 CPU";
+            return false;
+        }
+        document.body.classList.add('gpu-active');
+        return true;
+    }
+
     async function init() {
         try {
-            // 嘗試檢測 WebGPU 支持 (實驗性，能大幅加速)
-            let deviceType = 'auto';
-            if (navigator.gpu) {
-                // 如果瀏覽器支援 WebGPU，Transformers.js 可利用它加速
-                // 注意：v2.17 默認是 wasm，這裡保持默認以求最穩定的兼容性
-                // 若要極致速度可嘗試 device: 'webgpu' (視設備而定)
-            }
+            const useGPU = await checkGPU();
+            
+            statusMain.innerHTML = useGPU ? 
+                '正在加載神經網絡 <span class="gpu-badge" style="display:inline-block">GPU FORCE</span>' : 
+                '正在加載神經網絡 (CPU MODE)';
+
+            const deviceConfig = useGPU ? { device: 'webgpu' } : {};
 
             translator = await pipeline('translation', 'Xenova/m2m100_418M', {
-                quantized: true, // 保持 true 以防止瀏覽器崩潰，這不影響翻譯邏輯準確度，只影響權重精度
+                ...deviceConfig,
+                quantized: true,
                 progress_callback: (item) => {
                     if (item.status === 'progress') {
                         const p = Math.round(item.loaded / item.total * 100);
                         progressFill.style.width = p + '%';
-                        statusMsg.innerText = `下載資源中 (${item.file}): ${p}%`;
+                        
+                        if (item.loaded === item.total) {
+                            statusSub.innerText = `讀取緩存: ${item.file}`;
+                        } else {
+                            statusSub.innerText = `下載中 (${p}%): ${item.file}`;
+                        }
                     }
-                    if (item.status === 'ready') {
-                        statusMsg.innerText = '模型準備就緒';
-                    }
+                    
                     if (item.status === 'initiate') {
-                        statusMsg.innerText = '正在啟動神經網絡...';
+                        statusSub.innerText = '正在編譯 GPU 著色器 (請稍候)...';
+                        progressFill.style.width = '98%';
+                    }
+
+                    if (item.status === 'ready') {
+                        statusSub.innerText = '引擎準備就緒';
+                        progressFill.style.width = '100%';
                     }
                 }
             });
             
-            // 預熱完成
-            overlay.style.opacity = '0';
-            setTimeout(() => overlay.classList.add('hidden'), 500);
+            setTimeout(() => {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.classList.add('hidden'), 500);
+            }, 500);
 
         } catch (e) {
-            statusMsg.innerText = '初始化錯誤: ' + e.message;
+            statusMain.innerText = '初始化失敗';
+            statusSub.innerText = e.message;
+            statusSub.style.color = 'red';
             console.error(e);
-            alert("模型加載失敗，請檢查網絡連接或瀏覽器兼容性。");
+            alert("錯誤：無法啟動。\n" + e.message);
         }
     }
 
-    // 語言代碼轉換 (API vs 本地模型)
+    // 語言代碼轉換
     function getLangCode(uiCode, type) {
-        // API 使用 zh-TW/zh-CN，模型使用 zh
         if (type === 'api') return uiCode === 'zh' ? 'zh-TW' : uiCode;
-        if (type === 'local') return uiCode; // m2m100 使用 'zh' 代表中文
+        if (type === 'local') return uiCode; 
         if (type === 'stt') {
-            // 手機語音識別對語言代碼非常敏感
-            if (uiCode === 'zh') return 'zh-HK'; // 強制粵語
+            if (uiCode === 'zh') return 'zh-HK';
             if (uiCode === 'en') return 'en-US';
             if (uiCode === 'ja') return 'ja-JP';
         }
         return uiCode;
     }
 
-    // 混合模式：優先嘗試在線 API (極速)，失敗則回退本地 (離線)
+    // 混合翻譯策略
     async function translateSmart(text, sourceLang, targetLang) {
-        // 1. 如果有網絡，嘗試快速 API (解決手機運算慢的問題)
+        // 1. 優先嘗試 Google API
         if (navigator.onLine) {
             try {
                 const sl = getLangCode(sourceLang, 'api');
                 const tl = getLangCode(targetLang, 'api');
                 const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`;
                 
-                // 設定 2秒 超時，如果 API 慢就直接切換本地
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2000);
+                // **修正：超時改為 20秒 (20000ms)**
+                const timeoutId = setTimeout(() => controller.abort(), 20000); 
                 
                 const response = await fetch(url, { signal: controller.signal });
                 clearTimeout(timeoutId);
@@ -440,14 +431,13 @@
                     if (resultText) return { text: resultText, method: 'cloud' };
                 }
             } catch (e) {
-                console.log("Online API failed or timed out, switching to local model.");
+                console.log("Network/API failed, fallback to local.");
             }
         }
 
-        // 2. 離線或 API 失敗，使用本地模型
+        // 2. 本地 WebGPU 模型
         if (!translator) throw new Error("模型未加載");
         
-        // 讓 UI 有機會渲染 loading 動畫
         await new Promise(r => requestAnimationFrame(r));
         
         const output = await translator(text, {
@@ -462,7 +452,7 @@
         const isAtoB = direction === 'atob';
         const sourceId = isAtoB ? 'text-a' : 'text-b';
         const targetId = isAtoB ? 'text-b' : 'text-a';
-        const maskId = isAtoB ? 'mask-b' : 'mask-a'; // 遮罩在目標區
+        const maskId = isAtoB ? 'mask-b' : 'mask-a'; 
         const lineId = isAtoB ? 'line-b' : 'line-a'; 
         const btn = document.getElementById(isAtoB ? 'btn-a-to-b' : 'btn-b-to-a');
         
@@ -472,7 +462,6 @@
 
         if (!inputText.trim()) return;
 
-        // UI 狀態更新
         const originalBtnHtml = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = `<i class="fas fa-ellipsis-h"></i>`; 
@@ -481,14 +470,10 @@
         document.getElementById(lineId).classList.add('active');
 
         try {
-            // 執行混合翻譯
             const result = await translateSmart(inputText, srcLangVal, tgtLangVal);
             document.getElementById(targetId).value = result.text;
-            
-            // 如果是離線運算，可能會有標點符號粘連，這裡可以做簡單的正則修復 (可選)
-            
         } catch (err) {
-            alert('翻譯失敗，請確認模型已加載');
+            alert('翻譯失敗，請刷新頁面重試');
             console.error(err);
         } finally {
             btn.disabled = false;
@@ -506,7 +491,6 @@
         const langCode = document.getElementById(langSelectId).value;
         const utterance = new SpeechSynthesisUtterance(text);
         
-        // 確保朗讀語言正確
         if (langCode === 'zh') utterance.lang = 'zh-HK'; 
         else if (langCode === 'en') utterance.lang = 'en-US';
         else if (langCode === 'ja') utterance.lang = 'ja-JP';
@@ -515,17 +499,15 @@
         window.speechSynthesis.speak(utterance);
     }
 
-    // 語音識別 (針對手機優化版)
     function setupSpeechRecognition(buttonId, textId, langSelectId) {
         const btn = document.getElementById(buttonId);
         const textArea = document.getElementById(textId);
         
-        // 兼容性檢查：標準 API 或 Webkit 前綴
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         
         if (!SpeechRecognition) {
             btn.style.opacity = '0.3';
-            btn.onclick = () => alert("您的瀏覽器不支援語音識別 (iOS 請使用 Safari, Android 請使用 Chrome)");
+            btn.onclick = () => alert("您的瀏覽器不支援語音識別 (請使用 Chrome/Safari)");
             return;
         }
 
@@ -533,11 +515,10 @@
         let isRecording = false;
 
         function startRec() {
-            // 每次重新建立實例以避免手機上的狀態卡死
             recognition = new SpeechRecognition();
             const langCode = document.getElementById(langSelectId).value;
-            recognition.lang = getLangCode(langCode, 'stt'); // 關鍵：正確設定 zh-HK
-            recognition.continuous = false; // 手機上建議設為 false，否則容易斷線
+            recognition.lang = getLangCode(langCode, 'stt');
+            recognition.continuous = false;
             recognition.interimResults = true;
 
             recognition.onstart = () => {
@@ -554,46 +535,27 @@
                 console.error("Speech Error:", event.error);
                 isRecording = false;
                 btn.classList.remove('recording');
-                if (event.error === 'not-allowed') {
-                    alert("無法存取麥克風。請確認：\n1. 網站是否使用 HTTPS\n2. 是否已允許麥克風權限");
-                }
             };
 
             recognition.onresult = (event) => {
-                let interimTranscript = '';
                 let finalTranscript = '';
-
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
                         finalTranscript += event.results[i][0].transcript;
-                    } else {
-                        interimTranscript += event.results[i][0].transcript;
                     }
                 }
-                
-                // 將結果填入文本框 (追加模式)
                 if (finalTranscript) {
-                    const current = textArea.value;
-                    textArea.value = current ? current + finalTranscript : finalTranscript;
+                    textArea.value = textArea.value ? textArea.value + finalTranscript : finalTranscript;
                 }
             };
 
-            try {
-                recognition.start();
-            } catch (e) {
-                console.error("Start error:", e);
-            }
+            try { recognition.start(); } catch (e) { console.error(e); }
         }
 
         btn.addEventListener('click', (e) => {
-            // 阻止默認行為
             e.preventDefault();
-            
-            if (isRecording && recognition) {
-                recognition.stop();
-            } else {
-                startRec();
-            }
+            if (isRecording && recognition) recognition.stop();
+            else startRec();
         });
     }
 
@@ -605,7 +567,6 @@
     setupSpeechRecognition('mic-a', 'text-a', 'lang-a');
     setupSpeechRecognition('mic-b', 'text-b', 'lang-b');
 
-    // 啟動
     init();
 </script>
 </body>
