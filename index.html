@@ -408,7 +408,6 @@
 
     // 混合翻譯策略
     async function translateSmart(text, sourceLang, targetLang) {
-        // 1. 優先嘗試 Google API
         if (navigator.onLine) {
             try {
                 const sl = getLangCode(sourceLang, 'api');
@@ -416,7 +415,6 @@
                 const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`;
                 
                 const controller = new AbortController();
-                // **修正：超時改為 20秒 (20000ms)**
                 const timeoutId = setTimeout(() => controller.abort(), 20000); 
                 
                 const response = await fetch(url, { signal: controller.signal });
@@ -435,7 +433,6 @@
             }
         }
 
-        // 2. 本地 WebGPU 模型
         if (!translator) throw new Error("模型未加載");
         
         await new Promise(r => requestAnimationFrame(r));
@@ -499,10 +496,12 @@
         window.speechSynthesis.speak(utterance);
     }
 
+    // 修訂後的語音識別函數（針對手機優化）
     function setupSpeechRecognition(buttonId, textId, langSelectId) {
         const btn = document.getElementById(buttonId);
         const textArea = document.getElementById(textId);
         
+        // 處理前綴
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         
         if (!SpeechRecognition) {
@@ -518,12 +517,20 @@
             recognition = new SpeechRecognition();
             const langCode = document.getElementById(langSelectId).value;
             recognition.lang = getLangCode(langCode, 'stt');
-            recognition.continuous = false;
-            recognition.interimResults = true;
+            
+            // 手機上 continuous 設為 false 比較穩定
+            recognition.continuous = false; 
+            // 關鍵：必須開啟中間結果，以便即時顯示
+            recognition.interimResults = true; 
+
+            // 記錄開始說話前的文字內容
+            let initialText = textArea.value; 
 
             recognition.onstart = () => {
                 isRecording = true;
                 btn.classList.add('recording');
+                // 手機震動回饋
+                if (navigator.vibrate) navigator.vibrate(50);
             };
 
             recognition.onend = () => {
@@ -538,15 +545,18 @@
             };
 
             recognition.onresult = (event) => {
-                let finalTranscript = '';
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
-                    }
+                // 獲取當前這一段的語音內容（包含中間結果）
+                let currentTranscript = '';
+                for (let i = 0; i < event.results.length; ++i) {
+                    currentTranscript += event.results[i][0].transcript;
                 }
-                if (finalTranscript) {
-                    textArea.value = textArea.value ? textArea.value + finalTranscript : finalTranscript;
-                }
+                
+                // 修正：不等待 isFinal，直接將當前聽到的內容疊加到原始文字後方
+                // 這樣在手機上即使沒有正確觸發 Final，文字也已經顯示了
+                textArea.value = initialText + currentTranscript;
+                
+                // 自動捲動到底部
+                textArea.scrollTop = textArea.scrollHeight;
             };
 
             try { recognition.start(); } catch (e) { console.error(e); }
@@ -554,8 +564,11 @@
 
         btn.addEventListener('click', (e) => {
             e.preventDefault();
-            if (isRecording && recognition) recognition.stop();
-            else startRec();
+            if (isRecording && recognition) {
+                recognition.stop();
+            } else {
+                startRec();
+            }
         });
     }
 
