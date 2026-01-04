@@ -417,7 +417,7 @@
                 
                 const controller = new AbortController();
                 // **修正：超時改為 20秒 (20000ms)**
-                const timeoutId = setTimeout(() => controller.abort(), 20000); 
+                const timeoutId = setTimeout(() => controller.abort(), 1500); 
                 
                 const response = await fetch(url, { signal: controller.signal });
                 clearTimeout(timeoutId);
